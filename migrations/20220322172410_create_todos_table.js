@@ -3,7 +3,7 @@
  * @returns { Promise<void> }
  */
 export const up = async function (knex) {
-  await knex.schema.createTableIf('todos', (table) => {
+  await knex.schema.createTable('todos', (table) => {
     table.increments('id')
     table.string('text').notNullable()
     table.boolean('done').notNullable().defaultTo(false)
@@ -14,6 +14,6 @@ export const up = async function (knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-export const down = function (knex) {
-  return knex.schema.dropTable('todos')
+export const down = async function (knex) {
+  await knex.schema.dropTable('todos')
 }
