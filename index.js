@@ -1,76 +1,64 @@
 import express from 'express'
+import knex from 'knex'
+import knexfile from './knexfile.js'
 
 const port = 3000
 
-let id = 1
-
-const todos = [
-  {
-    id: id++,
-    text: 'Vzít si dovolenou',
-    done: false,
-  },
-  {
-    id: id++,
-    text: 'Koupit Elden Ring',
-    done: true,
-  },
-]
-
 const app = express()
+const db = knex(knexfile)
 
 app.set('view engine', 'ejs')
 
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
+  const todos = await db('todos').select('*')
+
   res.render('index', {
     title: 'ToDos!',
     todos,
   })
 })
 
-app.post('/add', (req, res) => {
+app.post('/add', async (req, res) => {
   const text = String(req.body.text)
 
-  todos.push({
-    id: id++,
+  await db('todos').insert({
     text,
-    done: false,
   })
 
   res.redirect('/')
 })
 
-app.get('/toggle/:id', (req, res, next) => {
+app.get('/toggle/:id', async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const todo = todos.find((todo) => todo.id === id)
+  const todo = await db('todos').select('*').where('id', id).first()
 
   if (!todo) return next()
 
-  todo.done = !todo.done
+  await db('todos').update({ done: !todo.done }).where('id', id)
 
   res.redirect('back')
 })
 
-app.get('/delete/:id', (req, res, next) => {
+app.get('/delete/:id', async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const index = todos.findIndex((todo) => todo.id === id)
+  const todo = await db('todos').select('*').where('id', id).first()
 
-  if (index === -1) return next()
+  if (!todo) return next()
 
-  todos.splice(index, 1)
+  await db('todos').delete().where('id', id)
 
   res.redirect('/')
 })
 
-app.get('/detail/:id', (req, res, next) => {
+app.get('/detail/:id', async (req, res, next) => {
   const id = Number(req.params.id)
 
-  const todo = todos.find((todo) => todo.id === id)
+  const todo = await db('todos').select('*').where('id', id).first()
 
   if (!todo) return next()
 
@@ -79,15 +67,15 @@ app.get('/detail/:id', (req, res, next) => {
   })
 })
 
-app.post('/edit/:id', (req, res, next) => {
+app.post('/edit/:id', async (req, res, next) => {
   const id = Number(req.params.id)
   const text = String(req.body.text)
 
-  const todo = todos.find((todo) => todo.id === id)
+  const todo = await db('todos').select('*').where('id', id).first()
 
   if (!todo) return next()
 
-  todo.text = text
+  await db('todos').update({ text }).where('id', id)
 
   res.redirect('back')
 })
