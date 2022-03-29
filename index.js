@@ -1,11 +1,10 @@
 import express from 'express'
-import knex from 'knex'
-import knexfile from './knexfile.js'
+import db, { getAllTodos } from './src/db.js'
+import { createWebSocketServer, sendTodosToAllConnections } from './src/websockets.js'
 
 const port = 3000
 
 const app = express()
-const db = knex(knexfile)
 
 app.set('view engine', 'ejs')
 
@@ -50,6 +49,8 @@ app.get('/toggle/:id', async (req, res, next) => {
 
   await db('todos').update({ done: !todo.done }).where('id', id)
 
+  sendTodosToAllConnections()
+
   res.redirect('back')
 })
 
@@ -61,6 +62,8 @@ app.get('/delete/:id', async (req, res, next) => {
   if (!todo) return next()
 
   await db('todos').delete().where('id', id)
+
+  sendTodosToAllConnections()
 
   res.redirect('/')
 })
@@ -87,6 +90,8 @@ app.post('/edit/:id', async (req, res, next) => {
 
   await db('todos').update({ text }).where('id', id)
 
+  sendTodosToAllConnections()
+
   res.redirect('back')
 })
 
@@ -96,6 +101,8 @@ app.use((req, res) => {
   res.render('404')
 })
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`)
 })
+
+createWebSocketServer(server)

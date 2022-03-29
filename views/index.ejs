@@ -18,33 +18,23 @@
       <button type="submit">Vyhledat</button>
     </form>
 
-    <table>
-      <tr>
-        <th>Text</th>
-        <th>Hotovo</th>
-        <th>Akce</th>
-      </tr>
-
-      <% for (const todo of todos) { %>
-      <tr>
-        <td><%= todo.text %></td>
-        <td><%= todo.done ? 'ano' : 'ne' %></td>
-        <td>
-          <a href="/detail/<%= todo.id %>">Detail</a>
-          <% if (todo.done) { %>
-          <a href="/toggle/<%= todo.id %>">Nehotovo</a>
-          <a href="/delete/<%= todo.id %>">Odstranit</a>
-          <% } else { %>
-          <a href="/toggle/<%= todo.id %>">Hotovo</a>
-          <% } %>
-        </td>
-      </tr>
-      <% } %>
-    </table>
+    <div id="todos"><%- include('_todos') %></div>
 
     <form action="/add" method="post">
       <input type="text" name="text" />
       <button type="submit">Přidat ToDo!</button>
     </form>
+
+    <script>
+      const ws = new WebSocket('ws://localhost:3000')
+
+      ws.addEventListener('message', (message) => {
+        const json = JSON.parse(message.data)
+
+        if (json.type === 'todos') {
+          document.getElementById('todos').innerHTML = json.html
+        }
+      })
+    </script>
   </body>
 </html>
