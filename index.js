@@ -13,7 +13,17 @@ app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 
 app.get('/', async (req, res) => {
-  const todos = await db('todos').select('*')
+  const query = db('todos').select('*')
+
+  if (req.query.done) {
+    query.where('done', req.query.done === 'true')
+  }
+
+  if (req.query.search) {
+    query.whereLike('text', `%${req.query.search}%`)
+  }
+
+  const todos = await query
 
   res.render('index', {
     title: 'ToDos!',
