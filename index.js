@@ -1,6 +1,11 @@
 import express from 'express'
-import db, { getAllTodos } from './src/db.js'
-import { createWebSocketServer, sendTodosToAllConnections } from './src/websockets.js'
+import db from './src/db.js'
+import {
+  createWebSocketServer,
+  sendDeleteToAllConnections,
+  sendTodosToAllConnections,
+  sendTodoToAllConnections,
+} from './src/websockets.js'
 
 const port = 3000
 
@@ -37,6 +42,8 @@ app.post('/add', async (req, res) => {
     text,
   })
 
+  sendTodosToAllConnections()
+
   res.redirect('/')
 })
 
@@ -50,6 +57,7 @@ app.get('/toggle/:id', async (req, res, next) => {
   await db('todos').update({ done: !todo.done }).where('id', id)
 
   sendTodosToAllConnections()
+  sendTodoToAllConnections(id)
 
   res.redirect('back')
 })
@@ -64,6 +72,7 @@ app.get('/delete/:id', async (req, res, next) => {
   await db('todos').delete().where('id', id)
 
   sendTodosToAllConnections()
+  sendDeleteToAllConnections(id)
 
   res.redirect('/')
 })
@@ -91,6 +100,7 @@ app.post('/edit/:id', async (req, res, next) => {
   await db('todos').update({ text }).where('id', id)
 
   sendTodosToAllConnections()
+  sendTodoToAllConnections(id)
 
   res.redirect('back')
 })

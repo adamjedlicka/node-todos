@@ -10,3 +10,9 @@ export const getAllTodos = async () => {
 
   return todos
 }
+
+export const getTodoById = async (id) => {
+  const todo = await db('todos').select('*').where({ id }).first()
+
+  return todo
+}
