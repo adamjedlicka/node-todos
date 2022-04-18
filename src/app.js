@@ -1,10 +1,7 @@
 import express from 'express'
-import db from './db.js'
-import {
-  sendDeleteToAllConnections,
-  sendTodosToAllConnections,
-  sendTodoToAllConnections,
-} from './websockets.js'
+import cookieParser from 'cookie-parser'
+import db, { createUser, getUserByToken } from './db.js'
+import { sendDeleteToAllConnections, sendTodosToAllConnections, sendTodoToAllConnections } from './websockets.js'
 
 export const app = express()
 
@@ -12,8 +9,21 @@ app.set('view engine', 'ejs')
 
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
 
-app.get('/', async (req, res) => {
+app.use(async (req, res, next) => {
+  const myToken = req.cookies.token
+
+  if (myToken) {
+    res.locals.user = await getUserByToken(myToken)
+  } else {
+    res.locals.user = null
+  }
+
+  next()
+})
+
+app.get('/', async (req, res, next) => {
   const query = db('todos').select('*')
 
   if (req.query.done) {
@@ -100,6 +110,21 @@ app.post('/edit/:id', async (req, res, next) => {
   sendTodoToAllConnections(id)
 
   res.redirect('back')
+})
+
+app.get('/register', async (req, res) => {
+  res.render('register')
+})
+
+app.post('/register', async (req, res) => {
+  const name = req.body.name
+  const password = req.body.password
+
+  const user = await createUser(name, password)
+
+  res.cookie('token', user.token)
+
+  res.redirect('/')
 })
 
 app.use((req, res) => {

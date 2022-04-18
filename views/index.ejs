@@ -9,6 +9,14 @@
   <body>
     <h1><%= title %></h1>
 
+    <% if (user) { %>
+      <%= user.name %>
+    <% } else { %>
+        <a href="/register">Registrace</a>
+    <% } %>
+
+    <hr>
+
     <a href="/">Vše</a>
     <a href="?done=true">Hotové</a>
     <a href="?done=false">Nehotové</a>
