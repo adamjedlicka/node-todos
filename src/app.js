@@ -1,7 +1,9 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
-import db, { createUser, getUserByToken } from './db.js'
-import { sendDeleteToAllConnections, sendTodosToAllConnections, sendTodoToAllConnections } from './websockets.js'
+import todosRouter from './routes/todos.js'
+import usersRouter from './routes/users.js'
+import loadUser from './middlewares/loadUser.js'
+import { getAllTodos } from './db/todos.js'
 
 export const app = express()
 
@@ -11,30 +13,13 @@ app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
-app.use(async (req, res, next) => {
-  const myToken = req.cookies.token
-
-  if (myToken) {
-    res.locals.user = await getUserByToken(myToken)
-  } else {
-    res.locals.user = null
-  }
-
-  next()
-})
+app.use(loadUser)
 
 app.get('/', async (req, res, next) => {
-  const query = db('todos').select('*')
-
-  if (req.query.done) {
-    query.where('done', req.query.done === 'true')
-  }
-
-  if (req.query.search) {
-    query.whereLike('text', `%${req.query.search}%`)
-  }
-
-  const todos = await query
+  const todos = await getAllTodos({
+    done: req.query.done && req.query.done === 'true',
+    search: req.query.search,
+  })
 
   res.render('index', {
     title: 'ToDos!',
@@ -42,90 +27,8 @@ app.get('/', async (req, res, next) => {
   })
 })
 
-app.post('/add', async (req, res) => {
-  const text = String(req.body.text)
-
-  await db('todos').insert({
-    text,
-  })
-
-  sendTodosToAllConnections()
-
-  res.redirect('/')
-})
-
-app.get('/toggle/:id', async (req, res, next) => {
-  const id = Number(req.params.id)
-
-  const todo = await db('todos').select('*').where('id', id).first()
-
-  if (!todo) return next()
-
-  await db('todos').update({ done: !todo.done }).where('id', id)
-
-  sendTodosToAllConnections()
-  sendTodoToAllConnections(id)
-
-  res.redirect('back')
-})
-
-app.get('/delete/:id', async (req, res, next) => {
-  const id = Number(req.params.id)
-
-  const todo = await db('todos').select('*').where('id', id).first()
-
-  if (!todo) return next()
-
-  await db('todos').delete().where('id', id)
-
-  sendTodosToAllConnections()
-  sendDeleteToAllConnections(id)
-
-  res.redirect('/')
-})
-
-app.get('/detail/:id', async (req, res, next) => {
-  const id = Number(req.params.id)
-
-  const todo = await db('todos').select('*').where('id', id).first()
-
-  if (!todo) return next()
-
-  res.render('detail', {
-    todo,
-  })
-})
-
-app.post('/edit/:id', async (req, res, next) => {
-  const id = Number(req.params.id)
-  const text = String(req.body.text)
-
-  const todo = await db('todos').select('*').where('id', id).first()
-
-  if (!todo) return next()
-
-  await db('todos').update({ text }).where('id', id)
-
-  sendTodosToAllConnections()
-  sendTodoToAllConnections(id)
-
-  res.redirect('back')
-})
-
-app.get('/register', async (req, res) => {
-  res.render('register')
-})
-
-app.post('/register', async (req, res) => {
-  const name = req.body.name
-  const password = req.body.password
-
-  const user = await createUser(name, password)
-
-  res.cookie('token', user.token)
-
-  res.redirect('/')
-})
+app.use(todosRouter)
+app.use(usersRouter)
 
 app.use((req, res) => {
   console.log('404', req.method, req.url)
