@@ -8,10 +8,20 @@
   </head>
   <body>
     <h1>Registrace</h1>
+
+    <a href='/'>Seznam ToDos</a>
+    <a href='/login'>Přihlášení</a>
+
+    <hr>
+
     <form action="/register" method="post">
-      <input type="text" name="name" />
-      <input type="password" name="password" />
+      <input type="text" name="name" placeholder="Jméno" />
+      <input type="password" name="password" placeholder="Heslo" />
       <button type="submit">Registrovat se</button>
     </form>
+
+    <% if (typeof error !== 'undefined') { %>
+      <div><%= error %></div>
+    <% } %>
   </body>
 </html>
