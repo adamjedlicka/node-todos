@@ -36,7 +36,7 @@
     </form>
 
     <script>
-      const ws = new WebSocket('ws://localhost:3000')
+      const ws = new WebSocket('ws://<%= appUrl %>')
 
       ws.addEventListener('message', (message) => {
         const json = JSON.parse(message.data)

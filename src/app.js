@@ -9,6 +9,10 @@ export const app = express()
 
 app.set('view engine', 'ejs')
 
+console.log(process.env.APP_URL)
+
+app.locals.appUrl = process.env.APP_URL
+
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
