@@ -4,6 +4,9 @@
   "description": "Todo app",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": "16"
+  },
   "scripts": {
     "start": "pm2 start ecosystem.config.cjs",
     "stop": "pm2 stop ecosystem.config.cjs",
