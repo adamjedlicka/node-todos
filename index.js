@@ -1,18 +1,11 @@
-import dotenv from 'dotenv'
+import 'dotenv/config'
+import { app } from './src/app.js'
+import { createWebSocketServer } from './src/websockets.js'
 
-dotenv.config()
+const port = process.env.APP_PORT || 3000
 
-const main = async () => {
-  const { app } = await import('./src/app.js')
-  const { createWebSocketServer } = await import('./src/websockets.js')
+const server = app.listen(port, () => {
+  console.log(`Server listening at http://localhost:${port}`)
+})
 
-  const port = process.env.APP_PORT || 3000
-
-  const server = app.listen(port, () => {
-    console.log(`Server listening at http://localhost:${port}`)
-  })
-
-  createWebSocketServer(server)
-}
-
-main()
+createWebSocketServer(server)
